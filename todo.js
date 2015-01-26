@@ -3,12 +3,101 @@
 var program = require('commander'),
 	redis = require('redis'),
 	//redisClient = redis.createClient(),
-	todoList = [],
-	i = 0;
+	todoList = [];
 
 /*redisClient.on("error", function (err) {
     console.log("Error " + err);
 });*/
+
+
+
+/** 
+ * Get task index from redis
+ * @param {string} name The name of the task to get
+ * @return {int} The index of the task in the todoList array (-1 if it not exists)
+ */
+var getTaskIndex = function (name) {
+		switch (typeof(name)){
+			case 'string':
+				try {
+					for (var i=0, x=todoList.length; i<x; i++) {
+	    				if (todoList[i].name === name) {
+	    					return i;
+	    				}
+					}
+				} catch (err) {
+					throw err;
+				}
+				break;
+
+			case 'undefined':
+			default:
+				console.log('Please specify the name of the task');
+				return -1;
+		}
+	},
+
+/** 
+ * Remove tasks from redis
+ * @param {string} name The name of the task to remove
+ * @return {object} The object containing the wanted task
+ */
+	rmTask = function (name){
+		try {
+			var task = todoList.splice(getTaskIndex(name), 1);
+			console(task + 'deleted');
+		} catch (err) {
+			throw err;
+		}
+	},
+
+/** 
+ * Store tasks in redis
+ * @param {object} task The object containing the task data
+ * @param {string} name The name of the task to replace (optional)
+ * @return {array} The array containing all the tasks
+ */
+	storeTask = function (name, options){
+		switch (typeof(options.name)){
+			case 'string':
+				var index = getTaskIndex(name);
+				if (index > -1) {
+					console.log(rmTask(todoList[index]));
+				} else {
+					console.log("Cannot update this task, it doesn't exist");
+				}
+				break;
+
+			case 'undefined':
+			default:
+				var name = options.name;
+				if (name) {
+					var date = ['today', 'tomorrow', 'upcoming', 'someday'].indexOf(options.date) > -1 ? options.date : 'upcoming',
+						priority = ['blocker', 'critical', 'major', 'minor', 'trivial'].indexOf(options.priority) > -1 ? options.priority : 'minor',
+						status = 'todo';
+					console.log(
+						todoList.push(
+							JSON.stringify({
+								'name': name,
+								'date': date,
+								'priority': priority,
+								'status': status
+							})
+						)
+					);
+				} else {
+					console.log('Please specify a name for your new task');
+				}
+		}
+	},
+
+/** 
+ * List tasks stored in redis
+ * @return {array} The todoList array
+ */
+	listTasks = function () {
+		console.log(todoList);
+	};
 
 /** 
  * List tasks in the todo list
@@ -20,12 +109,13 @@ program
 	.alias('li')
 	.option('-i, --include [include]', 'list option: all, todo, doing, or done')
 	.description('list tasks in the todo list')
-	.action(function(date, options){
+	.action(listTasks);
+	/*function(date, options){
 		date = ['today', 'tomorrow', 'upcoming', 'someday'].indexOf(date) > -1 ? date : 'today';
 		var include = ['all', 'todo', 'doing', 'done'].indexOf(options.include) > -1 ? options.include : 'all';
 		//console.log('List ' + include + ' tasks in the todo list for date: ' + date);
-		console.log(todoList);
-	});
+		console.log(listTasks());
+	});*/
 
 /** 
  * Add a new task in the todo list
@@ -39,24 +129,7 @@ program
 	.option('-d, --date [date]', 'set a due date for the task')
 	.option('-p, --priority [priority]', 'set a priority for the task')
 	.description('list tasks in the todo list')
-	.action(function(name, options){
-		var date = ['today', 'tomorrow', 'upcoming', 'someday'].indexOf(options.date) > -1 ? options.date : 'upcoming',
-			priority = ['blocker', 'critical', 'major', 'minor', 'trivial'].indexOf(options.priority) > -1 ? options.priority : 'minor',
-			status = 'todo';
-
-		if (typeof(name) === 'string'){
-			todoList.push({
-				'name': name,
-				'date': date,
-				'priority': priority,
-				'status': status
-			});
-			console.log('new task: ');
-			console.log(todoList[i]);
-		} else {
-			console.log('Please specify a name for your new task');
-		}
-	});
+	.action(storeTask);
 
 /** 
  * Edit an existing task
@@ -73,29 +146,7 @@ program
 	.option('-d, --date [date]', 'edit the due date of the task')
 	.option('-p, --priority [priority]', 'edit the priority of the task')
 	.description('list tasks in the todo list')
-	.action(function(name, options){
-		var newName = options.name;
-			newDate = ['today', 'tomorrow', 'upcoming', 'someday'].indexOf(options.date) > -1 ? options.date : 'upcoming',
-			newPriority = ['blocker', 'critical', 'major', 'minor', 'trivial'].indexOf(options.priority) > -1 ? options.priority : 'minor';
-
-		if (typeof(name) === 'string'){
-			try {
-				for (i=0, x=todoList.length; i<x; i++) {
-    				if (todoList[i].name === name) {
-    					todoList[i].name = newName;
-    					todoList[i].date = newDate;
-    					todoList[i].priority = newPriority;
-    					console.log(name + ' has been edited:');
-    					console.log(todoList[i]);
-    				}
-				}
-			} catch (err) {
-				throw err;
-			}
-		} else {
-			console.log('Please specify the name of the task');
-		}
-	});
+	.action(storeTask);
 
 /** 
  * Mark a task as "done"
@@ -106,20 +157,7 @@ program
 	.alias('ok')
 	.description('mark a task as "done"')
 	.action(function(name, options){
-		if (typeof(name) === 'string'){
-			try {
-				for (i=0, x=todoList.length; i<x; i++) {
-    				if (todoList[i].name === name) {
-    					todoList[i].status = 'done';
-    					console.log(name + ' marked as done');
-    				}
-				}
-			} catch (err) {
-				throw err;
-			}
-		} else {
-			console.log('Please specify the name of the task');
-		}
+		console.log(storeTask);
 	});
 
 /** 
@@ -132,20 +170,7 @@ program
 	.alias('do')
 	.description('mark a task as "doing"')
 	.action(function(name, options){
-		if (typeof(name) === 'string'){
-			try {
-				for (i=0, x=todoList.length; i<x; i++) {
-    				if (todoList[i].name === name) {
-    					todoList[i].status = 'doing';
-    					console.log(name + ' marked as doing');
-    				}
-				}
-			} catch (err) {
-				throw err;
-			}
-		} else {
-			console.log('Please specify the name of the task');
-		}
+		console.log(storeTask);
 	});
 
 /** 
@@ -154,23 +179,12 @@ program
  */
 program
 	.command('delete [name]')
-	.alias('stop')
 	.alias('del')
+	.alias('remove')
+	.alias('rm')
 	.description('delete a task')
 	.action(function(name, options){
-		if (typeof(name) === 'string'){
-			try {
-				for (i=0, x=todoList.length; i<x; i++) {
-    				if (todoList[i].name === name) {
-    					console.log(todoList[i].pop() + 'deleted');
-    				}
-				}
-			} catch (err) {
-				throw err;
-			}
-		} else {
-			console.log('Please specify the name of the task');
-		}
+		console.log(rmTask);
 	});
 
 program
