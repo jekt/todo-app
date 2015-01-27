@@ -2,12 +2,12 @@
 
 var program = require('commander'),
 	redis = require('redis'),
-	//redisClient = redis.createClient(),
+	redisClient = redis.createClient(6379, 'localhost'),
 	todoList = [];
 
-/*redisClient.on("error", function (err) {
-    console.log("Error " + err);
-});*/
+redisClient.on("error", function (err) {
+    console.log(err);
+});
 
 
 
