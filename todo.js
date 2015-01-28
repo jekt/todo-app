@@ -5,10 +5,10 @@ var program = require('commander'),
 	fs = require('fs');
 
 var listTasks = function () {
-		fs.exists('todo.json', function (exists) {
+		fs.exists(__dirname + '/todo.json', function (exists) {
 			console.log('\n*** TO DO LIST ***'.bold);
 		  	if (exists){
-		  		fs.readFile('todo.json', 'utf8', function (err, data) {
+		  		fs.readFile(__dirname + '/todo.json', 'utf8', function (err, data) {
 				  	if (err) throw err;
 				  	data = JSON.parse(data);
 				  	for (var i=0,x=data.length; i<x; i++){
@@ -18,17 +18,17 @@ var listTasks = function () {
 				  			'\t' + (i+1) + '. '+ data[i].name);
 				  	}
 		  			console.log('\n');
-				})
+				});
 		  	} else {
-		  		console.log('\tNothing yet...\n'.yellow);
+		  		console.log('Nothing yet...\n'.yellow);
 		  	}
 		});
 	},
 
 	flushDoneTask = function (){
-		fs.exists('todo.json', function (exists) {
+		fs.exists(__dirname + '/todo.json', function (exists) {
 		  	if (exists){
-		  		fs.readFile('todo.json', 'utf8', function (err, data) {
+		  		fs.readFile(__dirname + '/todo.json', 'utf8', function (err, data) {
 				  	if (err) throw err;
 				  	var edited = JSON.parse(data);
 				  	data = JSON.parse(data);
@@ -40,7 +40,7 @@ var listTasks = function () {
 				  		}
 				  	}
 				  	if (edited !== data){
-					  	fs.writeFile('todo.json', JSON.stringify(edited), function (err) {
+					  	fs.writeFile(__dirname + '/todo.json', JSON.stringify(edited), function (err) {
 						  	if (err) throw err;
 							console.log('Done tasks have been removed\n'.green);
 						});	
@@ -49,26 +49,26 @@ var listTasks = function () {
 				  	}
 				});
 		  	} else {
-		  		console.log('\tNothing to do...\n'.yellow);
+		  		console.log('Nothing to do...\n'.yellow);
 		  	}
 		});
 	},
 
 	storeTask = function (task){
 		if (task && (typeof(task) === 'string')){
-			fs.exists('todo.json', function (exists) {
+			fs.exists(__dirname + '/todo.json', function (exists) {
 			  	if (exists){
-			  		fs.readFile('todo.json', 'utf8', function (err, data) {
+			  		fs.readFile(__dirname + '/todo.json', 'utf8', function (err, data) {
 					  	if (err) throw err;
 					  	data = JSON.parse(data);
 					  	data.push({'name': task, 'status': 'TO DO'});
-					  	fs.writeFile('todo.json', JSON.stringify(data), function (err) {
+					  	fs.writeFile(__dirname + '/todo.json', JSON.stringify(data), function (err) {
 						  	if (err) throw err;
 							console.log(('New task added: "' + task + '"\n').green);
 						});	
 					})
 			  	} else {
-			  		fs.writeFile('todo.json', JSON.stringify([{'name': task, 'status': 'TO DO'}]), function (err) {
+			  		fs.writeFile(__dirname + '/todo.json', JSON.stringify([{'name': task, 'status': 'TO DO'}]), function (err) {
 						if (err) throw err;
 						console.log(('New task added: "' + task + '"\n').green);
 					});	
@@ -81,9 +81,9 @@ var listTasks = function () {
 
 	doTask = function (id, options){
 		if (id || options.task){
-			fs.exists('todo.json', function (exists) {
+			fs.exists(__dirname + '/todo.json', function (exists) {
 			  	if (exists){
-			  		fs.readFile('todo.json', 'utf8', function (err, data) {
+			  		fs.readFile(__dirname + '/todo.json', 'utf8', function (err, data) {
 					  	if (err) throw err;
 					  	var edited = JSON.parse(data);
 					  	data = JSON.parse(data);
@@ -91,7 +91,7 @@ var listTasks = function () {
 					  		if ((i+1 == id) || (edited[i].name === options.task)) edited[i].status = 'DONE';
 					  	}
 					  	if (edited !== data){
-						  	fs.writeFile('todo.json', JSON.stringify(edited), function (err) {
+						  	fs.writeFile(__dirname + '/todo.json', JSON.stringify(edited), function (err) {
 							  	if (err) throw err;
 								console.log(((options.task || id) + ' > DONE\n').green);
 							});	
@@ -100,7 +100,7 @@ var listTasks = function () {
 					  	}
 					});
 			  	} else {
-			  		console.log('\tNothing to do...\n'.yellow);
+			  		console.log('Nothing to do...\n'.yellow);
 			  	}
 			});
 		} else {
