@@ -5,13 +5,13 @@ var program = require('commander'),
 
 var listTasks = function () {
 		fs.exists('todo.json', function (exists) {
-			console.log('\nTO DO LIST:');
+			console.log('\n*** TO DO LIST ***');
 		  	if (exists){
 		  		fs.readFile('todo.json', 'utf8', function (err, data) {
 				  	if (err) throw err;
 				  	data = JSON.parse(data);
 				  	for (var i=0,x=data.length; i<x; i++){
-				  		console.log('\t' + (i+1) + '. ' + data[i].name + ' > ' + data[i].status);
+				  		console.log(data[i].status + '\t' + (i+1) + '. '+ data[i].name);
 				  	}
 		  			console.log('\n');
 				})
@@ -29,7 +29,7 @@ var listTasks = function () {
 				  	var edited = JSON.parse(data);
 				  	data = JSON.parse(data);
 				  	for (var i=0,x=edited.length; i<x; i++){
-				  		if (edited[i].status === 'done') {
+				  		if (edited[i].status === 'DONE') {
 				  			edited.splice(i, 1);
 				  			i--;
 				  			x--;
@@ -57,14 +57,14 @@ var listTasks = function () {
 			  		fs.readFile('todo.json', 'utf8', function (err, data) {
 					  	if (err) throw err;
 					  	data = JSON.parse(data);
-					  	data.push({'name': task, 'status': 'to do'});
+					  	data.push({'name': task, 'status': 'TO DO'});
 					  	fs.writeFile('todo.json', JSON.stringify(data), function (err) {
 						  	if (err) throw err;
 							console.log('New task added: "' + task + '"\n');
 						});	
 					})
 			  	} else {
-			  		fs.writeFile('todo.json', JSON.stringify([{'name': task, 'status': 'to do'}]), function (err) {
+			  		fs.writeFile('todo.json', JSON.stringify([{'name': task, 'status': 'TO DO'}]), function (err) {
 						if (err) throw err;
 						console.log('New task added: "' + task + '"\n');
 					});	
@@ -75,8 +75,8 @@ var listTasks = function () {
 		}
 	},
 
-	doTask = function (task){
-		if (task && (typeof(task) === 'string')){
+	doTask = function (options){
+		if (options.task || options.id){
 			fs.exists('todo.json', function (exists) {
 			  	if (exists){
 			  		fs.readFile('todo.json', 'utf8', function (err, data) {
@@ -84,12 +84,12 @@ var listTasks = function () {
 					  	var edited = JSON.parse(data);
 					  	data = JSON.parse(data);
 					  	for (var i=0,x=edited.length; i<x; i++){
-					  		if (edited[i].name === task) edited[i].status = 'done';
+					  		if ((edited[i].name === options.task) || (i+1 == options.id)) edited[i].status = 'DONE';
 					  	}
 					  	if (edited !== data){
 						  	fs.writeFile('todo.json', JSON.stringify(edited), function (err) {
 							  	if (err) throw err;
-								console.log(task + ' > done\n');
+								console.log((options.task || options.id) + ' > done\n');
 							});	
 					  	} else {
 					  		console.log('The task doesn\'t exist\n');
@@ -112,9 +112,11 @@ program
 	.action(listTasks);
 
 program
-	.command('done [task]')
+	.command('done')
 	.alias('ok')
 	.alias('do')
+	.option('-t, --task [task]', 'find by name')
+	.option('-i, --id [id]', 'find by id')
 	.description('mark a task as "done"')
 	.action(doTask);
 
