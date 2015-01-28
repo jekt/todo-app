@@ -4,6 +4,7 @@
   "description": "A simple local nerdy in-shell todo app",
   "main": "todo.js",
   "dependencies": {
+    "colors": "^1.0.3",
     "commander": "^2.6.0"
   },
   "devDependencies": {},

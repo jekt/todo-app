@@ -1,22 +1,26 @@
 'use strict';
 
 var program = require('commander'),
+	colors = require('colors'),
 	fs = require('fs');
 
 var listTasks = function () {
 		fs.exists('todo.json', function (exists) {
-			console.log('\n*** TO DO LIST ***');
+			console.log('\n*** TO DO LIST ***'.bold);
 		  	if (exists){
 		  		fs.readFile('todo.json', 'utf8', function (err, data) {
 				  	if (err) throw err;
 				  	data = JSON.parse(data);
 				  	for (var i=0,x=data.length; i<x; i++){
-				  		console.log(data[i].status + '\t' + (i+1) + '. '+ data[i].name);
+				  		console.log(((data[i].status === 'TO DO') ?
+				  				(data[i].status).red :
+				  				(data[i].status).green) + 
+				  			'\t' + (i+1) + '. '+ data[i].name);
 				  	}
 		  			console.log('\n');
 				})
 		  	} else {
-		  		console.log('\tNothing yet...\n');
+		  		console.log('\tNothing yet...\n'.yellow);
 		  	}
 		});
 	},
@@ -38,14 +42,14 @@ var listTasks = function () {
 				  	if (edited !== data){
 					  	fs.writeFile('todo.json', JSON.stringify(edited), function (err) {
 						  	if (err) throw err;
-							console.log('Done tasks have been removed\n');
+							console.log('Done tasks have been removed\n'.green);
 						});	
 				  	} else {
-				  		console.log('Nothing done yet...\n');
+				  		console.log('Nothing done yet...\n'.yellow);
 				  	}
 				});
 		  	} else {
-		  		console.log('\tNothing to do...\n');
+		  		console.log('\tNothing to do...\n'.yellow);
 		  	}
 		});
 	},
@@ -60,18 +64,18 @@ var listTasks = function () {
 					  	data.push({'name': task, 'status': 'TO DO'});
 					  	fs.writeFile('todo.json', JSON.stringify(data), function (err) {
 						  	if (err) throw err;
-							console.log('New task added: "' + task + '"\n');
+							console.log(('New task added: "' + task + '"\n').green);
 						});	
 					})
 			  	} else {
 			  		fs.writeFile('todo.json', JSON.stringify([{'name': task, 'status': 'TO DO'}]), function (err) {
 						if (err) throw err;
-						console.log('New task added: "' + task + '"\n');
+						console.log(('New task added: "' + task + '"\n').green);
 					});	
 			  	}
 			});
 		} else {
-			console.log('Please specify a valid name for your new task\n');
+			console.log('\/\!\\ Please specify a valid name for your new task\n'.red);
 		}
 	},
 
@@ -89,18 +93,18 @@ var listTasks = function () {
 					  	if (edited !== data){
 						  	fs.writeFile('todo.json', JSON.stringify(edited), function (err) {
 							  	if (err) throw err;
-								console.log((options.task || options.id) + ' > done\n');
+								console.log(((options.task || options.id) + ' > DONE\n').green);
 							});	
 					  	} else {
-					  		console.log('The task doesn\'t exist\n');
+					  		console.log('\/\!\\ The task doesn\'t exist\n'.red);
 					  	}
 					});
 			  	} else {
-			  		console.log('\tNothing to do...\n');
+			  		console.log('\tNothing to do...\n'.yellow);
 			  	}
 			});
 		} else {
-			console.log('Please specify the exact name of the task\n');
+			console.log('\/\!\\ Please specify the exact name of the task\n'.red);
 		}
 	};
 
