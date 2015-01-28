@@ -79,8 +79,8 @@ var listTasks = function () {
 		}
 	},
 
-	doTask = function (options){
-		if (options.task || options.id){
+	doTask = function (id, options){
+		if (id || options.task){
 			fs.exists('todo.json', function (exists) {
 			  	if (exists){
 			  		fs.readFile('todo.json', 'utf8', function (err, data) {
@@ -88,12 +88,12 @@ var listTasks = function () {
 					  	var edited = JSON.parse(data);
 					  	data = JSON.parse(data);
 					  	for (var i=0,x=edited.length; i<x; i++){
-					  		if ((edited[i].name === options.task) || (i+1 == options.id)) edited[i].status = 'DONE';
+					  		if ((i+1 == id) || (edited[i].name === options.task)) edited[i].status = 'DONE';
 					  	}
 					  	if (edited !== data){
 						  	fs.writeFile('todo.json', JSON.stringify(edited), function (err) {
 							  	if (err) throw err;
-								console.log(((options.task || options.id) + ' > DONE\n').green);
+								console.log(((options.task || id) + ' > DONE\n').green);
 							});	
 					  	} else {
 					  		console.log('\/\!\\ The task doesn\'t exist\n'.red);
@@ -116,11 +116,10 @@ program
 	.action(listTasks);
 
 program
-	.command('done')
+	.command('done [id]')
 	.alias('ok')
 	.alias('do')
 	.option('-t, --task [task]', 'find by name')
-	.option('-i, --id [id]', 'find by id')
 	.description('mark a task as "done"')
 	.action(doTask);
 
