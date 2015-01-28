@@ -1,83 +1,107 @@
 'use strict';
 
 var program = require('commander'),
-	redis = require('redis'),
-	redisClient = redis.createClient(6379, 'localhost');
-
-redisClient.on("error", function (err){
-	console.log(err);
-});
+	fs = require('fs');
 
 var listTasks = function () {
-		redisClient.lrange('todoList', 0, -1, function (err, res){
-			console.log('\nTO DO:');
-			if (res && res.length > 0) {
-				res.reverse();
-				res.forEach(function(val, i){
-					console.log('\t' + (i+1) + '. ' + val);
-				});
-			} else {
-				console.log('\tNothing yet...');
-			}
-		});
-		redisClient.lrange('doneList', 0, -1, function (err, res){
-			console.log('\nDONE:');
-			if (res && res.length > 0) {
-				res.reverse();
-				res.forEach(function(val, i){
-					console.log('\t' + (i+1) + '. ' + val);
-				});
-			} else {
-				console.log('\tNothing yet...');
-			}
+		fs.exists('todo.json', function (exists) {
+			console.log('\nTO DO LIST:');
+		  	if (exists){
+		  		fs.readFile('todo.json', 'utf8', function (err, data) {
+				  	if (err) throw err;
+				  	data = JSON.parse(data);
+				  	for (var i=0,x=data.length; i<x; i++){
+				  		console.log('\t' + (i+1) + '. ' + data[i].name + ' > ' + data[i].status);
+				  	}
+		  			console.log('\n');
+				})
+		  	} else {
+		  		console.log('\tNothing yet...\n');
+		  	}
 		});
 	},
 
-	rmTask = function (task){
-		if (task && (typeof(task) === 'string')){
-			redisClient.lrem('todoList', 1, task, function (err, res){
-				console.log(task + ' has been removed!');
-				listTasks();
-			});
-		} else {
-			console.log('Please specify the exact name of the task');
-		}
+	flushDoneTask = function (){
+		fs.exists('todo.json', function (exists) {
+		  	if (exists){
+		  		fs.readFile('todo.json', 'utf8', function (err, data) {
+				  	if (err) throw err;
+				  	var edited = JSON.parse(data);
+				  	data = JSON.parse(data);
+				  	for (var i=0,x=edited.length; i<x; i++){
+				  		if (edited[i].status === 'done') {
+				  			edited.splice(i, 1);
+				  			i--;
+				  			x--;
+				  		}
+				  	}
+				  	if (edited !== data){
+					  	fs.writeFile('todo.json', JSON.stringify(edited), function (err) {
+						  	if (err) throw err;
+							console.log('Done tasks have been removed\n');
+						});	
+				  	} else {
+				  		console.log('Nothing done yet...\n');
+				  	}
+				});
+		  	} else {
+		  		console.log('\tNothing to do...\n');
+		  	}
+		});
 	},
 
 	storeTask = function (task){
 		if (task && (typeof(task) === 'string')){
-			redisClient.lpush('todoList', task, function(err, res){
-				console.log('New task added: "' + task + '"');
-				listTasks();
+			fs.exists('todo.json', function (exists) {
+			  	if (exists){
+			  		fs.readFile('todo.json', 'utf8', function (err, data) {
+					  	if (err) throw err;
+					  	data = JSON.parse(data);
+					  	data.push({'name': task, 'status': 'to do'});
+					  	fs.writeFile('todo.json', JSON.stringify(data), function (err) {
+						  	if (err) throw err;
+							console.log('New task added: "' + task + '"\n');
+						});	
+					})
+			  	} else {
+			  		fs.writeFile('todo.json', JSON.stringify([{'name': task, 'status': 'to do'}]), function (err) {
+						if (err) throw err;
+						console.log('New task added: "' + task + '"\n');
+					});	
+			  	}
 			});
 		} else {
-			console.log('Please specify a valid name for your new task');
+			console.log('Please specify a valid name for your new task\n');
 		}
 	},
 
 	doTask = function (task){
 		if (task && (typeof(task) === 'string')){
-			redisClient.lrem('todoList', 1, task, function(err, res){
-				if (res > 0) {
-					console.log('nested');
-					redisClient.lpush('doneList', task, function(err, res){
-						console.log(task + ' > done, Bravo!');
-						listTasks();
+			fs.exists('todo.json', function (exists) {
+			  	if (exists){
+			  		fs.readFile('todo.json', 'utf8', function (err, data) {
+					  	if (err) throw err;
+					  	var edited = JSON.parse(data);
+					  	data = JSON.parse(data);
+					  	for (var i=0,x=edited.length; i<x; i++){
+					  		if (edited[i].name === task) edited[i].status = 'done';
+					  	}
+					  	if (edited !== data){
+						  	fs.writeFile('todo.json', JSON.stringify(edited), function (err) {
+							  	if (err) throw err;
+								console.log(task + ' > done\n');
+							});	
+					  	} else {
+					  		console.log('The task doesn\'t exist\n');
+					  	}
 					});
-				} else {
-					console.log('Task doesn\'t exist!');
-				}
+			  	} else {
+			  		console.log('\tNothing to do...\n');
+			  	}
 			});
 		} else {
-			console.log('Please specify the exact name of the task');
+			console.log('Please specify the exact name of the task\n');
 		}
-	},
-
-	flushTasks = function (){
-		redisClient.flushall(function (){
-			console.log('Done list flushed!');
-			listTasks();
-		});
 	};
 
 
@@ -90,6 +114,7 @@ program
 program
 	.command('done [task]')
 	.alias('ok')
+	.alias('do')
 	.description('mark a task as "done"')
 	.action(doTask);
 
@@ -97,7 +122,7 @@ program
 	.command('flush')
 	.alias('fl')
 	.description('flush the whole list')
-	.action(flushTasks);
+	.action(flushDoneTask);
 
 program
 	.command('add [task]')
@@ -112,5 +137,3 @@ program
 if (!process.argv.slice(2).length) {
     program.outputHelp();
 }
-listTasks();
-redisClient.quit();
