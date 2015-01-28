@@ -5,7 +5,8 @@
   "main": "todo.js",
   "dependencies": {
     "colors": "^1.0.3",
-    "commander": "^2.6.0"
+    "commander": "^2.6.0",
+    "inquirer": "^0.8.0"
   },
   "devDependencies": {},
   "scripts": {
