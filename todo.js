@@ -46,8 +46,8 @@ var listTasks = function (callback) {
 					  	fs.writeFile(__dirname + '/todo.json', JSON.stringify(edited), function (err) {
 						  	if (err) throw err;
 							console.log('Done tasks have been removed\n'.green);
-						});	
 						if (callback) callback();
+						});	
 				  	} else {
 				  		console.log('Nothing done yet...\n'.yellow);
 				  		if (callback) callback();
@@ -137,42 +137,46 @@ var listTasks = function (callback) {
 		], function(answers) {
 			switch (answers.command){
 				case 'Add a new task':
-					inquirer.prompt([
-						{
-							type: 'input',
-							name: 'task',
-							message: 'OK, what is it?'
-						}
-					], function(answer){
-						storeTask(answer.task, cli);
+					listTasks(function(){
+						inquirer.prompt([
+							{
+								type: 'input',
+								name: 'task',
+								message: 'OK, what is it?'
+							}
+						], function(answer){
+							storeTask(answer.task, cli);
+						})
 					});
 					break;
 
 				case 'Mark a task as "DONE"':
-					listTasks();
-					inquirer.prompt([
-						{
-							type: 'input',
-							name: 'taskID',
-							message: 'OK, which one? (id)'
-						}
-					], function(answer){
-						doTask(answer.taskID, null, cli);
+					listTasks(function(){
+						inquirer.prompt([
+							{
+								type: 'input',
+								name: 'taskID',
+								message: 'OK, which one? (id)'
+							}
+						], function(answer){
+							doTask(answer.taskID, null, cli);
+						})
 					});
 					break;
 
 				case 'Flush DONE tasks':
-					listTasks();
-					inquirer.prompt([
-						{
-							type: 'input',
-							name: 'confirm',
-							message: 'OK, which one? (Y/n)'
-						}
-					], function(answer){
-						if (answer.confirm === 'Y'){
-							flushDoneTask(cli);
-						}
+					listTasks(function(){
+						inquirer.prompt([
+							{
+								type: 'input',
+								name: 'confirm',
+								message: 'OK, which one? (Y/n)'
+							}
+						], function(answer){
+							if (answer.confirm === 'Y'){
+								flushDoneTask(cli);
+							}
+						})
 					});
 					break;
 
